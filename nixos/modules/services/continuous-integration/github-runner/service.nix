@@ -154,13 +154,17 @@ with lib;
               configureRunner = writeScript "configure" ''
                 if [[ -e "${newConfigTokenPath}" ]]; then
                   echo "Configuring GitHub Actions Runner"
+                  mac_suffix=$(${pkgs.iproute2}/bin/ip --json link show | \
+                    ${pkgs.jq}/bin/jq -r '.[] | select(.operstate == "UP") | .address | split(":") | join("")')
+                  CPU=$(${pkgs.util-linux}/bin/lscpu -e=MODELNAME --json | ${lib.getExe pkgs.jq} '.cpus[0].modelname' -r)
+                  MEM=$(${pkgs.util-linux}/bin/lsmem --json --bytes | ${lib.getExe pkgs.jq} '(.memory| map(.size) | add) / 1024 / 1024 / 1024 | ceil')
                   args=(
                     --unattended
                     --disableupdate
                     --work "$WORK_DIRECTORY"
                     --url ${escapeShellArg cfg.url}
-                    --labels ${escapeShellArg (concatStringsSep "," cfg.extraLabels)}
-                    ${optionalString (cfg.name != null ) "--name ${escapeShellArg cfg.name}"}
+                    --labels "nixos,$MEM,$CPU"
+                    --name ${escapeShellArg cfg.name}-"$mac_suffix"
                     ${optionalString cfg.replace "--replace"}
                     ${optionalString (cfg.runnerGroup != null) "--runnergroup ${escapeShellArg cfg.runnerGroup}"}
                     ${optionalString cfg.ephemeral "--ephemeral"}
@@ -297,3 +301,6 @@ with lib;
     }
   );
 }
+
+
+
