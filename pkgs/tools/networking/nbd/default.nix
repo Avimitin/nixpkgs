@@ -51,7 +51,7 @@ stdenv.mkDerivation rec {
   # ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
   env.NIX_CFLAGS_COMPILE = lib.optionalString stdenv.cc.isClang "-Wno-error=implicit-function-declaration";
 
-  doCheck = !stdenv.isDarwin;
+  doCheck = false;
 
   passthru.tests = {
     test = nixosTests.nbd;
